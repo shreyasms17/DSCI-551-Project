@@ -1,1 +1,5 @@
 src/data/raw/.DS_Store
+pyvenv.cfg
+bin/*
+lib/*
+src/data/databases/*
