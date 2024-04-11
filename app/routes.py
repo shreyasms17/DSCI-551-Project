@@ -2,8 +2,8 @@ from flask import render_template
 from database import get_products_from_db
 
 # Assume the database paths are imported or defined here
-DATABASE_PATH_1 = '/Users/preetigoel/Documents/GitHub/DSCI-551-Project/src/data/databases/products_1.db'
-DATABASE_PATH_2 = '/Users/preetigoel/Documents/GitHub/DSCI-551-Project/src/data/databases/products_2.db'
+DATABASE_PATH_1 = 'src/data/databases/products_1.db'
+DATABASE_PATH_2 = 'src/data/databases/products_2.db'
 
 def init_app(app):
     @app.route('/')
