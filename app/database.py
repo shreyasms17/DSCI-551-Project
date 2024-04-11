@@ -9,7 +9,7 @@ def get_db_connection(db_path):
 def get_products_from_db(db_path):
     conn = get_db_connection(db_path)
     cur = conn.cursor()
-    cur.execute('SELECT * FROM products')  # Ensure the table name is correct
+    cur.execute('SELECT * FROM products')
     products = cur.fetchall()
     conn.close()
     return products
