@@ -1,7 +1,7 @@
 from flask import render_template
 from database import get_products_from_db
 
-# Assume the database paths are imported or defined here
+# Database paths are defined here
 DATABASE_PATH_1 = 'src/data/databases/products_1.db'
 DATABASE_PATH_2 = 'src/data/databases/products_2.db'
 
