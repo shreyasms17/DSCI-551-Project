@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Listings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Product Listings</h1>
+    <table id="product-table">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category - Subcategory</th>
+                <th>Price</th>
+                <th>Link</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr class="product-row">
+                <td>
+                    <img src="{{ product[3] }}" onerror="handleImageError(this);" alt="{{ product[0] }}" class="product-img">
+                </td>
+                <td>{{ product[0] }}</td>
+                <td>{{ product[1] }} - {{ product[2] }}</td>
+                <td>${{ product[7] }}</td>
+                <td><a href="{{ product[4] }}">View Product</a></td>
+                <td><button class="add-to-cart">Add to Cart</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+
+
