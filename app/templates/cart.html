@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Listings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Cart</h1>
+    <table id="product-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Item Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart %}
+                <tr class="product-row">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.qty }}</td>
+                    <td>${{ item.price }}</td>
+                </tr>
+            {% endfor %}
+            <tr class="product-row">
+                <td></td>
+                <td><h4>Total Price</h4></td>
+                <td><h4>${{ total_price }}</h4></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
+
+
