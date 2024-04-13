@@ -8,7 +8,7 @@
 <body>
     <div class="header_container">
         <div class="left-item"><h1>Product Listings</h1></div>
-        <div class="left-item"><a href="/cart"><h1>Cart</h1></a></div>
+        <div class="left-item"><a href="/cart/{{ user_id }}"><h1>Cart</h1></a></div>
         <div class="right-item"><a href="/logout"><h4>Logout</h4></a></div>
     </div>
     <table id="product-table">
@@ -46,12 +46,13 @@
         }
 
         function addToCart(productName, price) {
-            console.log("Hello")
-            fetch(`/add_to_cart/${productName}`, {
+            // console.log("Hello")
+            fetch(`/add_to_cart`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                // bad practice to pass price here but for project's sake I'm making life easy here
                 body: JSON.stringify({productName: productName, price: price})
             })
             .then(response => response.json())

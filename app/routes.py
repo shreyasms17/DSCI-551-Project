@@ -12,10 +12,11 @@ def init_app(app, login_manager):
     
     @app.route('/listings')
     def product_listings():
+        user_id = session['id']
         products_1 = get_products_from_db(DATABASE_PATH_1)
         products_2 = get_products_from_db(DATABASE_PATH_2)
         products = products_1 + products_2  # Combine products from both databases
-        return render_template('listing.html', products=products)
+        return render_template('listing.html', products=products, user_id=user_id)
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
@@ -65,10 +66,11 @@ def init_app(app, login_manager):
         else:
             return get_user_from_db(user_id, DATABASE_PATH_2)
     
-    @app.route('/add_to_cart/<product_name>', methods=['POST'])
-    def add_to_cart(product_name):
+    @app.route('/add_to_cart', methods=['POST'])
+    def add_to_cart():
         data = request.get_json()
         price = data['price']
+        product_name = data['productName']
         if 'cart' not in session:
             session['cart'] = {}
         session['cart'][product_name] = session['cart'].get(product_name, {"qty": 0, "price": price})
@@ -78,16 +80,20 @@ def init_app(app, login_manager):
         session.modified = True
         return redirect(url_for('product_listings'))
     
-    @app.route('/cart')
-    def show_cart():
-        cart_items = session.get('cart', {})
-        # print(cart_items)
+    @app.route('/cart/<user_id>')
+    def show_cart(user_id):
         cart_details = []
         total_price = 0
-        for product in cart_items:
-            cart_details.append({"name": product, "qty": cart_items[product]["qty"], "price": cart_items[product]["price"]})
-            total_price +=  cart_items[product]["qty"] * float(cart_items[product]["price"])
-        print(cart_details)
+        # print("ID: ", session.get('id', -1), session, user_id)
+        if session.get('id', -1) == int(user_id):
+            # print("EQUALL!!")
+            cart_items = session.get('cart', {})
+            # print(session.get('cart', {}))
+            for product in cart_items:
+                if cart_items[product]["qty"] > 0:
+                    cart_details.append({"name": product, "qty": cart_items[product]["qty"], "price": cart_items[product]["price"]})
+                    total_price +=  cart_items[product]["qty"] * float(cart_items[product]["price"])
+            # print("Cart details", cart_details)
         return render_template('cart.html', cart=cart_details, total_price=total_price)
     
     @app.route('/logout')
@@ -96,3 +102,16 @@ def init_app(app, login_manager):
         save_cart(session['id'], session['cart'], DATABASE_PATH_1)
         session.pop('cart', None)
         return redirect(url_for('login'))
+    
+
+    @app.route('/modify_quantity', methods=['POST'])
+    def modify_quantity():
+        data = request.get_json()
+        product_name = data["productName"]
+        session['cart'][product_name]['qty'] = data['qty']
+        if session['cart'][product_name]['qty'] == 0:
+            del session['cart'][product_name]
+        session.modified = True
+        return {
+            "success": True
+        }
