@@ -1,5 +1,6 @@
 # database.py
 import sqlite3
+import json
 
 def get_db_connection(db_path):
     conn = sqlite3.connect(db_path)
@@ -42,4 +43,26 @@ def login_user(username, db_path):
     cur.execute(f""" UPDATE users SET logged_in = 1 WHERE username = '{username}' """)
     conn.close()
 
+def save_cart(id, cart, db_path):
+    conn = get_db_connection(db_path)
+    cur = conn.cursor()
+    print("dumping: ", json.dumps(cart))
+    cur.execute(f""" INSERT INTO session (user_id, cart) VALUES (?, ?)""", (id, json.dumps(cart)))
+    conn.commit()
+    # cur.execute(f"""select * from session""")
+    # a = cur.fetchall()
+    # # print(a)
+    conn.close()
+    print(get_cart(id, db_path))
 
+def get_cart(id, db_path):
+    conn = get_db_connection(db_path)
+    cur = conn.cursor()
+    cur.execute(f"""select cart from session where user_id = {id}""")
+    session_info = cur.fetchall()
+    print(session_info)
+    conn.close()
+    if not session_info or not session_info[0]["cart"]:
+        return {}
+    else:
+        return json.loads(session_info[0]['cart'])

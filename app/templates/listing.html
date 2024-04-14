@@ -6,7 +6,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Product Listings</h1>
+    <div class="header_container">
+        <div class="left-item"><h1>Product Listings</h1></div>
+        <div class="left-item"><a href="/cart/{{ user_id }}"><h1>Cart</h1></a></div>
+        <div class="right-item"><a href="/logout"><h4>Logout</h4></a></div>
+    </div>
     <table id="product-table">
         <thead>
             <tr>
@@ -28,7 +32,7 @@
                 <td>{{ product[2] }} - {{ product[1] }}</td>
                 <td>${{ product[7] }}</td>
                 <td><a href="{{ product[4] }}">View Product</a></td>
-                <td><button class="add-to-cart">Add to Cart</button></td>
+                <td><button class="add-to-cart" onclick="addToCart('{{ product[0] }}', '{{ product[7] }}')">Add to Cart</button></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -39,6 +43,23 @@
             // Find the parent row of the image and remove it from the table
             var productRow = imageElement.closest('.product-row');
             productRow.remove();
+        }
+
+        function addToCart(productName, price) {
+            // console.log("Hello")
+            fetch(`/add_to_cart`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // bad practice to pass price here but for project's sake I'm making life easy here
+                body: JSON.stringify({productName: productName, price: price})
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Product added to cart:', data);
+            })
+            .catch(error => console.error('Error adding product to cart:', error));
         }
     </script>
 </body>

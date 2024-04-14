@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Listings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Cart</h1>
+    <table id="product-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Item Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart %}
+                <tr class="product-row" id="row_{{ loop.index }}">
+                    <td>{{ item.name }}</td>
+                    <td>
+                        <button id="decrement_{{ loop.index }}" onclick="decrementQuantity('{{ loop.index }}', '{{ item.name }}')">-</button>
+                        <input class="quantity" type="text" id="quantity_{{ loop.index }}" value="{{ item.qty }}" readonly>
+                        <button id="increment_{{ loop.index }}" onclick="incrementQuantity('{{ loop.index }}', '{{ item.name }}')">+</button>
+                    </td>
+                    <td class="price">${{ item.price }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2">Total Price:</td>
+                <td id="total_price">${{ total_price }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    <script>
+        function updateTotal() {
+            var total = 0;
+            var rows = document.querySelectorAll('.product-row');
+            rows.forEach(function(row) {
+                var quantity = parseInt(row.querySelector('.quantity').value);
+                var price = parseFloat(row.querySelector('.price').textContent.replace('$', ''));
+                total += quantity * price;
+            });
+            document.getElementById('total_price').textContent = '$' + total.toFixed(2);
+        }
+
+        function incrementQuantity(rowId, productName) {
+            var quantityField = document.getElementById('quantity_' + rowId);
+            var decrementButton = document.getElementById('decrement_' + rowId);
+            var currentQuantity = parseInt(quantityField.value);
+            quantityField.value = currentQuantity + 1;
+            updateTotal();
+            if (currentQuantity + 1 > 0) {
+                decrementButton.disabled = false;
+            }
+            // Optionally send update to server here
+            fetch(`/modify_quantity`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({productName: productName, qty: currentQuantity+1})
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Product added to cart:', data);
+            })
+            .catch(error => console.error('Error adding product to cart:', error));
+        }
+
+        function decrementQuantity(rowId, productName) {
+            var quantityField = document.getElementById('quantity_' + rowId);
+            var currentQuantity = parseInt(quantityField.value);
+            currentQuantity = currentQuantity - 1;
+            if (currentQuantity == 0) {
+                document.getElementById('row_' + rowId).remove(); 
+            }
+            else {
+                quantityField.value = currentQuantity;
+            }
+            updateTotal();
+            // Optionally send update to server here
+            fetch(`/modify_quantity`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({productName: productName, qty: currentQuantity})
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Product added to cart:', data);
+            })
+            .catch(error => console.error('Error adding product to cart:', error));
+        }
+    </script>
+</body>
+</html>
+
+

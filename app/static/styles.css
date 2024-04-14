@@ -61,3 +61,19 @@ a:hover {
 .container {
     margin: 20px;
 }
+
+.header_container{
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    width: 100%;
+    /* padding-top: 2%; */
+}
+
+.left-item{
+    padding-left: 2%;
+}
+
+.right-item{
+    padding-right: 2%;
+}

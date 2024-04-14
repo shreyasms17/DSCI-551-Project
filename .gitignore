@@ -3,3 +3,7 @@ pyvenv.cfg
 bin/*
 lib/*
 src/data/databases/*
+app/data/databases/*
+app/__pycache__/*
+app/data/databases/products_1.db
+app/data/databases/products_2.db
