@@ -60,9 +60,16 @@ def create_database_and_insert_data(directory, database_directory, config_file):
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
                 username TEXT NOT NULL,
-                password TEXT NOT NULL, 
+                password TEXT NOT NULL,
+                admin_user INTEGER,
                 logged_in INTEGER
             );
+            '''
+        )
+
+        conn.execute('''
+            INSERT INTO users(username, password, logged_in, admin_user) values ("admin", 
+            "password", 1, 1);
             '''
         )
 

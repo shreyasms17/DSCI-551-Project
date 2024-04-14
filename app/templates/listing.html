@@ -28,7 +28,16 @@
                 <td>{{ product[2] }} - {{ product[1] }}</td>
                 <td>${{ product[7] }}</td>
                 <td><a href="{{ product[4] }}">View Product</a></td>
-                <td><button class="add-to-cart">Add to Cart</button></td>
+                <td>
+                {% if is_admin %}
+                    <form action="/admin/products" method="GET">
+                        <input type="hidden" name="product_name" value="{{ product[0]}}">
+                        <button type="submit">Edit Product</button>
+                    </form>
+                </td>
+                {% else %}
+                    <td><button class="add-to-cart">Add to Cart</button></td>
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>

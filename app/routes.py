@@ -1,5 +1,6 @@
 from flask import render_template, request, redirect, url_for, abort
-from database import get_products_from_db, get_user_from_db, add_user_to_db, login_user
+from database import get_products_from_db, get_user_from_db, add_user_to_db, login_user 
+from database import get_product_from_db, update_product, delete_product_from_db
 
 # Assume the database paths are imported or defined here
 DATABASE_PATH_1 = 'data/databases/products_1.db'
@@ -11,7 +12,7 @@ def init_app(app, login_manager):
         products_1 = get_products_from_db(DATABASE_PATH_1)
         products_2 = get_products_from_db(DATABASE_PATH_2)
         products = products_1 + products_2  # Combine products from both databases
-        return render_template('listing.html', products=products)
+        return render_template('listing.html', products=products, is_admin=True)
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
@@ -55,3 +56,54 @@ def init_app(app, login_manager):
             return user_1
         else:
             return get_user_from_db(user_id, DATABASE_PATH_2)
+
+
+    @app.route('/admin/products', methods=["GET", "POST"])
+    def products():
+      # If the user made a POST request, create a new user
+        if request.method == "GET":
+            product_name = request.args.get("product_name")
+            product = get_product_from_db(DATABASE_PATH_1, product_name)
+
+
+            if not product:
+                product = get_product_from_db(DATABASE_PATH_2, product_name)
+
+            return render_template("product.html", product=product[0])
+        elif request.method == "POST":
+            product_name = request.form.get("product_name")
+            product = get_product_from_db(DATABASE_PATH_1, product_name)
+            db_path = DATABASE_PATH_1
+            if not product:
+                product = get_product_from_db(DATABASE_PATH_2, product_name)
+                db_path = DATABASE_PATH_2
+
+            updated_product = request.form
+            updated_product_dict = dict(product[0])
+
+            if len(updated_product.get("category_subcategory")) > 0:
+                updated_product_dict['main_category'], updated_product_dict['sub_category'] = updated_product.get("category_subcategory").split("|")
+
+            if len(updated_product.get("price")) > 0:
+                updated_product_dict['discount_price_usd'] = updated_product.get("price")
+
+            if len(updated_product.get("link")) > 0:
+                updated_product_dict['link'] = updated_product.get("link")
+
+            update_product(updated_product_dict, db_path)
+            product = get_product_from_db(db_path, product_name)
+
+            return render_template("product.html", product=product[0])
+
+    @app.route('/admin/products/delete', methods=["POST"])
+    def delete_product():
+        if request.method == "POST":
+            product_name = request.form.get("product_name")
+            product = get_product_from_db(DATABASE_PATH_1, product_name)
+            db_path = DATABASE_PATH_1
+            if not product:
+                product = get_product_from_db(DATABASE_PATH_2, product_name)
+                db_path = DATABASE_PATH_2
+
+            delete_product_from_db(product_name, db_path)
+            return redirect("/")
