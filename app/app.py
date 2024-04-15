@@ -1,7 +1,7 @@
 from flask import Flask
 import routes
 from db_setup import *
-import sqlalchemy as db
+# import sqlalchemy as db
 from flask_login import LoginManager
 
 app = Flask(__name__)
