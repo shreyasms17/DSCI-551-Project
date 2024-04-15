@@ -6,11 +6,38 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="header_container">
+       <div class="header_container">
         <div class="left-item"><h1>Product Listings</h1></div>
         <div class="left-item"><a href="/cart/{{ user_id }}"><h1>Cart</h1></a></div>
         <div class="right-item"><a href="/logout"><h4>Logout</h4></a></div>
     </div>
+       <!-- Instructions for searching products -->
+<div id="search-instructions">
+    Search for a product from a selected category
+</div>
+
+<!-- Dropdown for categories above the search bar -->
+<div id="category-dropdown">
+    <form action="/" method="get" id="categoryForm">
+        <select name="category" id="category-select" onchange="submitForm()">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+            <option value="{{ category }}" {% if category== selected_category %}selected{% endif %}>{{ category }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<!-- Search form -->
+<div id="search-bar" style="display: none;">
+    <form action="/" method="get">
+        <input type="hidden" name="category" value="{{ selected_category }}">
+        <input type="text" name="search" placeholder="Search products...">
+        <button type="submit">Search</button>
+    </form>
+</div>
+
     <table id="product-table">
         <thead>
             <tr>
@@ -39,13 +66,30 @@
     </table>
 
     <script>
+        function submitForm() {
+        document.getElementById("categoryForm").submit();
+    }
+
+    function showSearchBar(category) {
+        var searchBar = document.getElementById('search-bar');
+        if (category) {
+            searchBar.style.display = 'block';
+        } else {
+            searchBar.style.display = 'none';
+        }
+    }
+
+    // Call showSearchBar to ensure the search bar is shown if a category is pre-selected
+    window.onload = function () {
+        var categorySelect = document.getElementById('category-select');
+        showSearchBar(categorySelect.value);
+    };
         function handleImageError(imageElement) {
             // Find the parent row of the image and remove it from the table
             var productRow = imageElement.closest('.product-row');
             productRow.remove();
         }
-
-        function addToCart(productName, price) {
+         function addToCart(productName, price) {
             // console.log("Hello")
             fetch(`/add_to_cart`, {
                 method: 'POST',

@@ -1,30 +1,49 @@
 from flask import render_template, request, redirect, url_for, abort, session
-from database import get_products_from_db, get_user_from_db, add_user_to_db, login_user, get_cart, save_cart
+from database import get_products_from_db, get_user_from_db, add_user_to_db, login_user, DATABASE_PATH_1, \
+    DATABASE_PATH_2, get_all_categories, \
+    get_products_from_category, get_cart, save_cart
 
-# Assume the database paths are imported or defined here
-DATABASE_PATH_1 = 'data/databases/products_1.db'
-DATABASE_PATH_2 = 'data/databases/products_2.db'
 
 def init_app(app, login_manager):
     @app.route("/")
     def index():
         return redirect(url_for("login"))
-    
-    @app.route('/listings')
+
+    @app.route('/listings', methods=['GET'])
     def product_listings():
         user_id = session['id']
-        products_1 = get_products_from_db(DATABASE_PATH_1)
-        products_2 = get_products_from_db(DATABASE_PATH_2)
-        products = products_1 + products_2  # Combine products from both databases
-        return render_template('listing.html', products=products, user_id=user_id)
+        # Get all categories from both databases
+        categories_1 = get_all_categories(DATABASE_PATH_1)
+        categories_2 = get_all_categories(DATABASE_PATH_2)
+        all_categories = sorted(set(categories_1 + categories_2))
+
+        # Retrieve the category and search query from request parameters
+        selected_category = request.args.get('category', '')
+        search_query = request.args.get('search', '')
+
+        # Initially fetch products from both databases
+        products = get_products_from_db(DATABASE_PATH_1) + get_products_from_db(DATABASE_PATH_2)
+        products = filter_products(products)  # Filter out invalid products
+
+        # If a specific category is selected, fetch products from the corresponding database
+        if selected_category:
+            products = get_products_from_category(selected_category)
+            products = filter_products(products)  # Filter again after fetching by category
+
+        # If a search query is provided, further filter the products
+        if search_query:
+            products = [product for product in products if search_query.lower() in product['name'].lower()]
+
+        return render_template('listing.html', products=products, categories=all_categories,
+                               selected_category=selected_category, user_id=user_id)
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
-        # If a post request was made, find the user by 
+        # If a post request was made, find the user by
         # filtering for the username
         if request.method == "POST":
             user = get_user_from_db(request.form.get("username"), DATABASE_PATH_1)
-            # Check if the password entered is the 
+            # Check if the password entered is the
             # same as the user's password
             print("User: " + str(user))
             # print(dict(user[0]))
@@ -44,7 +63,7 @@ def init_app(app, login_manager):
 
     @app.route('/signup', methods=["GET", "POST"])
     def register():
-      # If the user made a POST request, create a new user
+        # If the user made a POST request, create a new user
         if request.method == "POST":
             user_dict = {
                 'username': request.form.get("username"),
@@ -65,7 +84,7 @@ def init_app(app, login_manager):
             return user_1
         else:
             return get_user_from_db(user_id, DATABASE_PATH_2)
-    
+
     @app.route('/add_to_cart', methods=['POST'])
     def add_to_cart():
         data = request.get_json()
@@ -79,7 +98,7 @@ def init_app(app, login_manager):
         print(session)
         session.modified = True
         return redirect(url_for('product_listings'))
-    
+
     @app.route('/cart/<user_id>')
     def show_cart(user_id):
         cart_details = []
@@ -91,18 +110,18 @@ def init_app(app, login_manager):
             # print(session.get('cart', {}))
             for product in cart_items:
                 if cart_items[product]["qty"] > 0:
-                    cart_details.append({"name": product, "qty": cart_items[product]["qty"], "price": cart_items[product]["price"]})
-                    total_price +=  cart_items[product]["qty"] * float(cart_items[product]["price"])
+                    cart_details.append(
+                        {"name": product, "qty": cart_items[product]["qty"], "price": cart_items[product]["price"]})
+                    total_price += cart_items[product]["qty"] * float(cart_items[product]["price"])
             # print("Cart details", cart_details)
         return render_template('cart.html', cart=cart_details, total_price=total_price)
-    
+
     @app.route('/logout')
     def logout():
         # save cart info to db
         save_cart(session['id'], session['cart'], DATABASE_PATH_1)
         session.pop('cart', None)
         return redirect(url_for('login'))
-    
 
     @app.route('/modify_quantity', methods=['POST'])
     def modify_quantity():
@@ -115,3 +134,12 @@ def init_app(app, login_manager):
         return {
             "success": True
         }
+def filter_products(products):
+    valid_products = []
+    for product in products:
+        # Check if the product's price is not None
+        if product[7] is not None:
+            valid_products.append(product)
+
+    print(f"Filtered products count: {len(valid_products)}")  # Debugging output
+    return valid_products
