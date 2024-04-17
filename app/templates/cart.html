@@ -35,6 +35,11 @@
             </tr>
         </tfoot>
     </table>
+    <br/>
+    {% if cart %}
+            <button id="place-order" onclick="placeOrder('{{ user_id }}')">Place Order</button>
+            <p id="order-status"></p>
+    {% endif %}
     <script>
         function updateTotal() {
             var total = 0;
@@ -95,6 +100,28 @@
                 console.log('Product added to cart:', data);
             })
             .catch(error => console.error('Error adding product to cart:', error));
+        }
+
+        function placeOrder(user_id) {
+            if (confirm("Are you sure you want to place the order?")) {
+                // Assume the cart is not empty because the button is only rendered if cart exists
+                fetch(`/place_order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({user_id})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("order-status").innerText = data["text"];
+                })
+                .catch(error => console.error('Error adding product to cart:', error));
+                // Here you would likely also make a server request to actually process the order
+            } else {
+                // Handle case where user cancels the order
+                document.getElementById("order-status").innerText = "Order Cancelled.";
+            }
         }
     </script>
 </body>

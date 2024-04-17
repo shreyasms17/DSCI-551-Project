@@ -1,7 +1,13 @@
 from flask import render_template, request, redirect, url_for, abort, session
 from database import get_products_from_db, get_user_from_db, add_user_to_db, login_user, DATABASE_PATH_1, \
     DATABASE_PATH_2, get_all_categories, \
-    get_products_from_category, get_cart, save_cart
+    get_products_from_category, get_cart, save_cart, clear_cart
+
+def hash_user(username):
+    if len(username)%2==0:
+        return DATABASE_PATH_1
+    else:
+        return DATABASE_PATH_2
 
 
 def init_app(app, login_manager):
@@ -42,16 +48,16 @@ def init_app(app, login_manager):
         # If a post request was made, find the user by
         # filtering for the username
         if request.method == "POST":
-            user = get_user_from_db(request.form.get("username"), DATABASE_PATH_1)
+            user = get_user_from_db(request.form.get("username"), hash_user(request.form.get("username")))
             # Check if the password entered is the
             # same as the user's password
             print("User: " + str(user))
             # print(dict(user[0]))
             if user and user[0]["password"] == request.form.get("password"):
                 # Use the login_user method to log in the user
-                login_user(user[0]["username"], DATABASE_PATH_1)
+                login_user(user[0]["username"], hash_user(user[0]["username"]))
                 # retrieve cart info
-                session['cart'] = get_cart(user[0]['id'], DATABASE_PATH_1)
+                session['cart'] = get_cart(user[0]['id'], hash_user(user[0]["username"]))
                 session['id'] = user[0]['id']
                 return redirect(url_for("product_listings"))
             else:
@@ -70,7 +76,7 @@ def init_app(app, login_manager):
                 'password': request.form.get("password")
             }
             # Add the user to the database
-            add_user_to_db(user_dict, DATABASE_PATH_1)
+            add_user_to_db(user_dict, hash_user(user_dict['username']))
 
             return redirect(url_for("login"))
         # Renders sign_up template if user made a GET request
@@ -104,7 +110,7 @@ def init_app(app, login_manager):
         cart_details = []
         total_price = 0
         # print("ID: ", session.get('id', -1), session, user_id)
-        if session.get('id', -1) == int(user_id):
+        if user_id and session.get('id', '') == user_id:
             # print("EQUALL!!")
             cart_items = session.get('cart', {})
             # print(session.get('cart', {}))
@@ -114,12 +120,18 @@ def init_app(app, login_manager):
                         {"name": product, "qty": cart_items[product]["qty"], "price": cart_items[product]["price"]})
                     total_price += cart_items[product]["qty"] * float(cart_items[product]["price"])
             # print("Cart details", cart_details)
-        return render_template('cart.html', cart=cart_details, total_price=total_price)
+        return render_template('cart.html', user_id=session.get('id'), cart=cart_details, total_price=total_price)
 
     @app.route('/logout')
     def logout():
         # save cart info to db
-        save_cart(session['id'], session['cart'], DATABASE_PATH_1)
+        user_1 = get_user_from_db(session['id'], DATABASE_PATH_1)
+        if user_1:
+            if session.get('cart', {}):
+                save_cart(session['id'], session['cart'], DATABASE_PATH_1)
+        else:
+            if session.get('cart', {}):
+                save_cart(session['id'], session['cart'], DATABASE_PATH_2)
         session.pop('cart', None)
         return redirect(url_for('login'))
 
@@ -134,6 +146,24 @@ def init_app(app, login_manager):
         return {
             "success": True
         }
+    
+    @app.route('/place_order', methods=['POST'])
+    def place_order():
+        data = request.get_json()
+        user_id = data["user_id"]
+        response = {
+            "text" : ''
+        }
+        if session.get('cart', {}) and session.get('id', '') == user_id:
+            session.pop('cart', None)
+            response['text'] = "Order placed!"
+        else:
+            response['text'] = "Nothing in cart!"
+        clear_cart(user_id, DATABASE_PATH_1)
+        session.modified = True
+        return response
+
+
 def filter_products(products):
     valid_products = []
     for product in products:
