@@ -1,6 +1,8 @@
 from flask import render_template, request, redirect, url_for, abort, session
 from database import get_products_from_db, get_user_from_db, add_user_to_db, login_user, DATABASE_PATH_1, \
     DATABASE_PATH_2, get_all_categories, \
+    get_products_from_category, get_cart, save_cart, \
+    get_product_from_db, update_product, delete_product_from_db, add_product_to_db, get_db_path_for_category, \
     get_products_from_category, get_cart, save_cart, clear_cart
 
 def hash_user(username):
@@ -8,7 +10,6 @@ def hash_user(username):
         return DATABASE_PATH_1
     else:
         return DATABASE_PATH_2
-
 
 def init_app(app, login_manager):
     @app.route("/")
@@ -40,25 +41,34 @@ def init_app(app, login_manager):
         if search_query:
             products = [product for product in products if search_query.lower() in product['name'].lower()]
 
+        is_admin = 0
+        username = session['username']
+        user = get_user_from_db(username)
+
+        if user and user[0]['admin_user']:
+            is_admin = 1
+
         return render_template('listing.html', products=products, categories=all_categories,
-                               selected_category=selected_category, user_id=user_id)
+                               selected_category=selected_category, user_id=user_id, is_admin=is_admin)
+
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
         # If a post request was made, find the user by
         # filtering for the username
         if request.method == "POST":
-            user = get_user_from_db(request.form.get("username"), hash_user(request.form.get("username")))
+            user = get_user_from_db(request.form.get("username"))
             # Check if the password entered is the
             # same as the user's password
             print("User: " + str(user))
             # print(dict(user[0]))
             if user and user[0]["password"] == request.form.get("password"):
                 # Use the login_user method to log in the user
-                login_user(user[0]["username"], hash_user(user[0]["username"]))
+                login_user(user[0]["username"])
                 # retrieve cart info
                 session['cart'] = get_cart(user[0]['id'], hash_user(user[0]["username"]))
                 session['id'] = user[0]['id']
+                session['username'] = user[0]['username']
                 return redirect(url_for("product_listings"))
             else:
                 abort(404)
@@ -76,13 +86,14 @@ def init_app(app, login_manager):
                 'password': request.form.get("password")
             }
             # Add the user to the database
-            add_user_to_db(user_dict, hash_user(user_dict['username']))
+            add_user_to_db(user_dict)
 
             return redirect(url_for("login"))
         # Renders sign_up template if user made a GET request
         return render_template("signup.html")
 
-    # Creates a user loader callback that returns the user object given an id
+
+     # Creates a user loader callback that returns the user object given an id
     @login_manager.user_loader
     def loader_user(user_id):
         user_1 = get_user_from_db(user_id, DATABASE_PATH_1)
@@ -91,6 +102,75 @@ def init_app(app, login_manager):
         else:
             return get_user_from_db(user_id, DATABASE_PATH_2)
 
+
+    @app.route('/admin/products', methods=["GET", "POST"])
+    def products():
+      # If the user made a POST request, create a new user
+        if request.method == "GET":
+            product_name = request.args.get("product_name")
+            product = get_product_from_db(DATABASE_PATH_1, product_name)
+
+            if not product:
+                product = get_product_from_db(DATABASE_PATH_2, product_name)
+
+            return render_template("product.html", product=product[0])
+        elif request.method == "POST":
+            product_name = request.form.get("product_name")
+            product = get_product_from_db(DATABASE_PATH_1, product_name)
+            db_path = DATABASE_PATH_1
+            if not product:
+                product = get_product_from_db(DATABASE_PATH_2, product_name)
+                db_path = DATABASE_PATH_2
+
+            updated_product = request.form
+            updated_product_dict = dict(product[0])
+
+            if updated_product.get("category_subcategory") and len(updated_product.get("category_subcategory")) > 0:
+                print("updated_product: " + str(updated_product))
+                updated_product_dict['main_category'], updated_product_dict['sub_category'] = updated_product.get("category_subcategory").split("|")
+
+            if updated_product.get("price") and len(updated_product.get("price")) > 0:
+                updated_product_dict['discount_price_usd'] = updated_product.get("price")
+
+            if updated_product.get("link") and len(updated_product.get("link")) > 0:
+                updated_product_dict['link'] = updated_product.get("link")
+
+            update_product(updated_product_dict)
+            product = get_product_from_db(db_path, product_name)
+
+            return render_template("product.html", product=product[0])
+
+
+    @app.route('/admin/products/add', methods=["GET", "POST"])
+    def products_add():
+        if request.method == "GET":
+            return render_template("product_add.html")
+        elif request.method == "POST":
+            product_dict = request.form
+
+            if not product_dict.get("product_name"):
+                abort(400)
+
+            add_product_to_db(product_dict)
+
+            db_path = get_db_path_for_category(product_dict.get("category_subcategory").split("|")[0])
+            product = get_product_from_db(db_path, product_dict.get("product_name"))
+
+            return render_template("product.html", product=product[0])
+
+    @app.route('/admin/products/delete', methods=["POST"])
+    def delete_product():
+        if request.method == "POST":
+            product_name = request.form.get("product_name")
+            product = get_product_from_db(DATABASE_PATH_1, product_name)
+            db_path = DATABASE_PATH_1
+            if not product:
+                product = get_product_from_db(DATABASE_PATH_2, product_name)
+                db_path = DATABASE_PATH_2
+
+            delete_product_from_db(product_name, product[0]['main_category'])
+            return redirect("/listings")
+    
     @app.route('/add_to_cart', methods=['POST'])
     def add_to_cart():
         data = request.get_json()
@@ -125,13 +205,13 @@ def init_app(app, login_manager):
     @app.route('/logout')
     def logout():
         # save cart info to db
-        user_1 = get_user_from_db(session['id'], DATABASE_PATH_1)
+        user_1 = get_user_from_db(session['username'])
         if user_1:
             if session.get('cart', {}):
-                save_cart(session['id'], session['cart'], DATABASE_PATH_1)
+                save_cart(session['id'], session['cart'])
         else:
             if session.get('cart', {}):
-                save_cart(session['id'], session['cart'], DATABASE_PATH_2)
+                save_cart(session['id'], session['cart'])
         session.pop('cart', None)
         return redirect(url_for('login'))
 
@@ -162,7 +242,6 @@ def init_app(app, login_manager):
         clear_cart(user_id, DATABASE_PATH_1)
         session.modified = True
         return response
-
 
 def filter_products(products):
     valid_products = []

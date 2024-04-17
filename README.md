@@ -6,4 +6,4 @@ Make sure you have virtualenv installed on your system for the creation of a vir
 
 ### Steps to follow for environment setup and database setup: 
     sh setup.sh
-    python3 src/main/db_setup.py
+    python3 app/app.py

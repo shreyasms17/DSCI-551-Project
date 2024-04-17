@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Product</h1>
+    <table id="product-table">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category - Subcategory</th>
+                <th>Price</th>
+                <th>Link</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="product-row">
+                <td>
+                    <img src="{{ product[3] }}" alt="{{ product[0] }}" class="product-img">
+                </td>
+                <td>{{ product[0] }}</td>
+                <td>{{ product[2] }} - {{ product[1] }}</td>
+                <td>${{ product[7] }}</td>
+                <td><a href="{{ product[4] }}">View Product</a></td>
+            </tr>
+
+            <tr class="product-row">
+                <form action="/admin/products" method="POST">
+                    <td>
+                        <img src="{{ product[3] }}" alt="{{ product[0] }}" class="product-img">
+                    </td>
+                    <td>
+                        <input type="hidden" name="product_name" value="{{ product[0]}}">
+                    </td>
+                    <td>
+                        <input type="text" name="category_subcategory" placeholder="Category|Subcategory">
+                    </td>>
+
+                    <td>
+                        <input type="text" name="price" placeholder="Price">
+                    </td>
+
+                    <td>
+                        <input type="text" name="link" placeholder="link">
+                    </td>
+                    <td><button class="update">Update</button></td>
+                </form>
+
+                <form action="/admin/products/delete" method="POST">
+                    <input type="hidden" name="product_name" value="{{ product[0]}}">
+                    <td><button class="delete">Delete</button></td>
+                </form>>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
+
+
