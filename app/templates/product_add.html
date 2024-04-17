@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Product</h1>
+    <table id="product-table">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category - Subcategory</th>
+                <th>Price</th>
+                <th>Link</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <tr class="product-row">
+                <form action="/admin/products/add" method="POST">
+                    <td>
+                        <input type="text" name="image_link" placeholder="Image link">
+                    </td>
+                    <td>
+                        <input type="text" name="product_name" placeholder="Product name">
+                    </td>
+                    <td>
+                        <input type="text" name="category_subcategory" placeholder="Category|Subcategory">
+                    </td>>
+
+                    <td>
+                        <input type="text" name="price" placeholder="Price">
+                    </td>
+
+                    <td>
+                        <input type="text" name="link" placeholder="link">
+                    </td>
+                    <td><button class="add">Add</button></td>
+                </form>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
+
+
