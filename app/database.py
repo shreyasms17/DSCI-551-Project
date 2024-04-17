@@ -1,8 +1,9 @@
 import sqlite3
 import json
+import hashlib
 
-DATABASE_PATH_1 = 'data/databases/products_1.db'
-DATABASE_PATH_2 = 'data/databases/products_2.db'
+DATABASE_PATH_1 = './data/databases/products_1.db'
+DATABASE_PATH_2 = './data/databases/products_2.db'
 
 # Dictionary to map categories to their respective databases
 CATEGORY_HASH = {
@@ -93,8 +94,8 @@ def add_user_to_db(user_dict):
 
     conn = get_db_connection(db_path)
     cur = conn.cursor()
-    cur.execute(f"""INSERT INTO users(username, password, logged_in, admin_user) values ("{user_dict['username']}", 
-        "{user_dict['password']}", 0, 0);""")
+    cur.execute(f"""INSERT INTO users(id, username, password, logged_in) values ("{hashlib.md5(user_dict['username'].encode()).hexdigest()}", "{user_dict['username']}", 
+        "{user_dict['password']}", 0);""")
     conn.commit()
     conn.close()
 
@@ -117,9 +118,6 @@ def save_cart(id, cart, db_path):
     print("dumping: ", json.dumps(cart))
     cur.execute(f""" INSERT INTO session (user_id, cart) VALUES (?, ?)""", (id, json.dumps(cart)))
     conn.commit()
-    # cur.execute(f"""select * from session""")
-    # a = cur.fetchall()
-    # # print(a)
     conn.close()
     print(get_cart(id, db_path))
 
@@ -171,7 +169,7 @@ def delete_product_from_db(product_name, category):
 def get_cart(id, db_path):
     conn = get_db_connection(db_path)
     cur = conn.cursor()
-    cur.execute(f"""select cart from session where user_id = {id}""")
+    cur.execute(f"""select cart from session where user_id = "{id}" """)
     session_info = cur.fetchall()
     print(session_info)
     conn.close()
@@ -179,3 +177,9 @@ def get_cart(id, db_path):
         return {}
     else:
         return json.loads(session_info[0]['cart'])
+
+def clear_cart(id, db_path):
+    conn = get_db_connection(db_path)
+    cur = conn.cursor()
+    cur.execute(f"""delete from session where user_id = "{id}" """)
+    conn.close()
