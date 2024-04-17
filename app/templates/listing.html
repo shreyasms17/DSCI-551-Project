@@ -18,7 +18,7 @@
 
 <!-- Dropdown for categories above the search bar -->
 <div id="category-dropdown">
-    <form action="/" method="get" id="categoryForm">
+    <form action="/listings" method="get" id="categoryForm">
         <select name="category" id="category-select" onchange="submitForm()">
             <option value="">All Categories</option>
             {% for category in categories %}
@@ -31,7 +31,7 @@
 
 <!-- Search form -->
 <div id="search-bar" style="display: none;">
-    <form action="/" method="get">
+    <form action="/listings" method="get">
         <input type="hidden" name="category" value="{{ selected_category }}">
         <input type="text" name="search" placeholder="Search products...">
         <button type="submit">Search</button>

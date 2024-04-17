@@ -205,13 +205,13 @@ def init_app(app, login_manager):
     @app.route('/logout')
     def logout():
         # save cart info to db
-        user_1 = get_user_from_db(session['id'], DATABASE_PATH_1)
+        user_1 = get_user_from_db(session['username'])
         if user_1:
             if session.get('cart', {}):
-                save_cart(session['id'], session['cart'], DATABASE_PATH_1)
+                save_cart(session['id'], session['cart'])
         else:
             if session.get('cart', {}):
-                save_cart(session['id'], session['cart'], DATABASE_PATH_2)
+                save_cart(session['id'], session['cart'])
         session.pop('cart', None)
         return redirect(url_for('login'))
 
