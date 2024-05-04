@@ -208,10 +208,10 @@ def init_app(app, login_manager):
         user_1 = get_user_from_db(session['username'])
         if user_1:
             if session.get('cart', {}):
-                save_cart(session['id'], session['cart'])
+                save_cart(session['id'], session['cart'], DATABASE_PATH_1)
         else:
             if session.get('cart', {}):
-                save_cart(session['id'], session['cart'])
+                save_cart(session['id'], session['cart'], DATABASE_PATH_2)
         session.pop('cart', None)
         return redirect(url_for('login'))
 

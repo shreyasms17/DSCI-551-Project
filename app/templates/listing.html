@@ -8,7 +8,11 @@
 <body>
        <div class="header_container">
         <div class="left-item"><h1>Product Listings</h1></div>
-        <div class="left-item"><a href="/cart/{{ user_id }}"><h1>Cart</h1></a></div>
+        {% if is_admin %}
+            <div class="left-item"><a href="/admin/products/add"><h1>Add Product</h1></a></div>
+        {% else %}
+            <div class="left-item"><a href="/cart/{{ user_id }}"><h1>Cart</h1></a></div>
+        {% endif %}
         <div class="right-item"><a href="/logout"><h4>Logout</h4></a></div>
     </div>
        <!-- Instructions for searching products -->
